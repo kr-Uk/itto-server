@@ -1,0 +1,7 @@
+.env
+secrets/
+certbot/
+backups/
+.claude/
+*.log
+.DS_Store
