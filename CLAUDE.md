@@ -97,3 +97,25 @@ docker exec -it itto-redis redis-cli
 0 */12 * * * /opt/itto/renew-certs.sh                                       # Nginx reload for cert renewal
 0 3 * * *   /opt/itto/backup-db.sh >> /opt/itto/backups/backup.log 2>&1     # Daily DB backup (03:00 UTC, 7-day retention)
 ```
+
+## Troubleshooting Log
+
+### 2026-02-12
+1. **Nginx 설정 마운트 안 됨 (서버 접속 불가)**
+   - 증상: 모든 컨테이너 Up인데 외부 접속 불가, 컨테이너 내부 `/etc/nginx/conf.d/` 비어있음
+   - 원인: git pull 등으로 호스트의 `nginx/conf.d/` 디렉토리가 재생성되면서 Docker bind mount가 기존 inode를 참조
+   - 해결: `docker compose restart nginx`
+
+2. **API 403 에러 (SecurityConfig 경로 불일치)**
+   - 증상: `/api/v1/auth/login`, `/api/v1/hobbies` 등에서 403
+   - 원인: 기존 SecurityConfig의 permitAll 경로가 `/api/...`였으나, 새 배포에서 컨트롤러가 `/api/v1/...`로 변경됨
+   - 해결: 백엔드에서 SecurityConfig도 `/api/v1/...`로 업데이트하여 재배포
+
+3. **`/api/v1/system/version` 500 에러**
+   - 증상: version API 호출 시 500
+   - 원인: `platform` 필수 쿼리 파라미터 누락 시 500, 파라미터 포함해도 DB에 데이터 없어서 404
+   - 해결: `app_versions` 테이블에 ANDROID/IOS 초기 데이터 INSERT (`min_version: 1.0.0`, `latest_version: 1.0.0`)
+
+4. **Nginx DNS 캐시로 인한 배포 후 수동 reload 필요**
+   - 증상: app 컨테이너 재생성 후 nginx가 이전 IP를 캐시하여 502/503
+   - 해결: `resolver 127.0.0.11 valid=10s` + 변수 기반 `proxy_pass` 적용 → 배포 시 자동 resolve
