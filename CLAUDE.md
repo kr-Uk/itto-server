@@ -77,7 +77,7 @@ docker exec -it itto-redis redis-cli
 - Nginx blocks common scan paths (.php, .env, wp-admin, etc.)
 - X-Frame-Options: DENY (API), SAMEORIGIN (Grafana)
 - Certbot auto-renews every 12h; cron reloads nginx every 12h
-- app/grafana container recreate 후 nginx reload 필요 (DNS cache)
+- Nginx는 Docker DNS resolver (`127.0.0.11`, 10s TTL)를 사용하여 app/grafana 컨테이너 재생성 시 자동으로 새 IP를 resolve (수동 reload 불필요)
 
 ## Git Repositories
 | Repo | Description |
