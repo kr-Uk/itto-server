@@ -79,6 +79,14 @@ docker exec -it itto-redis redis-cli
 - Certbot auto-renews every 12h; cron reloads nginx every 12h
 - app/grafana container recreate 후 nginx reload 필요 (DNS cache)
 
+## Git Repositories
+| Repo | Description |
+|------|-------------|
+| `kr-Uk/itto-server` (private) | 인프라 설정 (이 레포, `/opt/itto`) |
+| `kr-Uk/itto-backend` | Spring Boot 백엔드 앱 |
+
+> **TODO**: git committer를 설정해야 함 (`git config user.name` / `user.email`)
+
 ## CI/CD
 - GitHub repo: `kr-Uk/itto-backend`
 - main push → GitHub Actions → GHCR 이미지 빌드 → SSH 배포 → `docker compose up -d app`
