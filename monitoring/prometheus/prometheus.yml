@@ -9,4 +9,4 @@ scrape_configs:
   - job_name: itto-app
     metrics_path: /actuator/prometheus
     static_configs:
-      - targets: ["app:8080"]
+      - targets: ["app:80"]

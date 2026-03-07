@@ -1,7 +1,14 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   nginx:
     image: nginx:1.27-alpine
     container_name: itto-nginx
+    mem_limit: 128m
     ports:
       - "80:80"
       - "443:443"
@@ -15,6 +22,7 @@ services:
       - grafana
     networks:
       - itto_net
+    logging: *default-logging
     restart: unless-stopped
 
   certbot:
@@ -26,6 +34,7 @@ services:
       - ./certbot/conf:/etc/letsencrypt
     networks:
       - itto_net
+    logging: *default-logging
     restart: unless-stopped
 
   minio:
@@ -39,11 +48,19 @@ services:
       - minio_data:/data
     networks:
       - itto_net
+    logging: *default-logging
     restart: unless-stopped
 
   app:
     image: ghcr.io/kr-uk/itto-backend:latest
     container_name: itto-app
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
@@ -68,11 +85,18 @@ services:
       - minio
     networks:
       - itto_net
+    logging: *default-logging
     restart: unless-stopped
 
   postgres:
     image: postgres:16-alpine
     container_name: itto-postgres
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -81,16 +105,24 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - itto_net
+    logging: *default-logging
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     container_name: itto-redis
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
     networks:
       - itto_net
+    logging: *default-logging
     restart: unless-stopped
 
   prometheus:
@@ -105,6 +137,7 @@ services:
       - "--web.enable-lifecycle"
     networks:
       - itto_net
+    logging: *default-logging
     restart: unless-stopped
 
   grafana:
@@ -119,6 +152,7 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
     networks:
       - itto_net
+    logging: *default-logging
     restart: unless-stopped
 
   loki:
@@ -130,6 +164,7 @@ services:
       - loki_data:/loki
     networks:
       - itto_net
+    logging: *default-logging
     restart: unless-stopped
 
   promtail:
@@ -142,6 +177,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - itto_net
+    logging: *default-logging
     restart: unless-stopped
 
 networks:
