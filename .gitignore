@@ -1,6 +1,8 @@
 .env
 secrets/
 certbot/
+nginx/certs/*
+!nginx/certs/README.md
 backups/
 .claude/
 *.log
